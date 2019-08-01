@@ -3,13 +3,22 @@ import cv2
 # create Background Subtractor objects
 bs = cv2.createBackgroundSubtractorKNN(detectShadows=True)
 
-_es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 4))
+history = 10
+bs.setHistory(history)
+
+_es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+
+counter = 0
 
 
 def dynamic_area_detect(frame, ignore_area=[], min_size=500, max_size=22000):
     """ignore_area： 忽略检测区域[[x, y, w, h]"""
-    global bs
+    global bs, counter
     fgmask = bs.apply(frame)
+    if counter < history:
+        print(counter, end='\t')
+        counter += 1
+        return []
 
     fg2 = fgmask.copy()
     # 二值化阈值处理
@@ -17,9 +26,13 @@ def dynamic_area_detect(frame, ignore_area=[], min_size=500, max_size=22000):
     for i in ignore_area:
         x, y, w, h = i
         th[y: y+h, x:x+w] = 0
-
-    # 形态学膨胀
-    dilated = cv2.dilate(th, _es, iterations=2)
+# 形态学膨胀
+## 1
+    th = cv2.erode(th, _es, iterations=2)
+    dilated = cv2.dilate(th, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8, 3)), iterations=2)
+## 2
+    # dilated = cv2.dilate(th, _es, iterations=2)
+##
     contours, hier = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     target_area = []
@@ -28,17 +41,23 @@ def dynamic_area_detect(frame, ignore_area=[], min_size=500, max_size=22000):
             # 该函数计算矩形的边界框
             (x, y, w, h) = cv2.boundingRect(c)
             target_area.append((x, y, w, h))
+            cv2.rectangle(dilated, (x, y), (x + w, y + h), (255, 255, 0), 3)
 
+    cv2.imwrite('test\\' + str(counter) + '.jpg', dilated)
     # cv2.imshow("mog", fgmask)
-    cv2.imshow("thresh", th)
-    print('Dynamic Arae Number: ', len(target_area))
+    # cv2.imshow("thresh", th)
+    cv2.imshow('dilated', dilated)
+
+    print('Frame %d Dynamic Arae Number: %d' % (counter, len(target_area)))
     print(target_area)
+    counter += 1
     return target_area
 
 
 if __name__ == '__main__':
 
-    camera = cv2.VideoCapture(0)  # 参数0表示第一个摄像头
+    camera = cv2.VideoCapture('data\\video\\chaplin.mp4')
+    # camera = cv2.VideoCapture(0)  # 参数0表示第一个摄像头
     # 判断视频是否打开
     if camera.isOpened():
         print('Open')
