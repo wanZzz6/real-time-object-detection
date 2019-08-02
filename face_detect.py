@@ -19,6 +19,7 @@ def face_detect(img):
         # 保存人脸
         cv2.imwrite(os.path.join('data', 'face', str(face_num) + '.jpg'), img[y:y+h, x:x+w, :])
         face_num += 1
+        print('Face Location:', x, y, x + w, y + h)
         print('Save Face', face_num)
         # 用矩形圈出人脸
         # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
