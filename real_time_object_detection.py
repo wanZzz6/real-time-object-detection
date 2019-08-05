@@ -23,7 +23,7 @@ ap.add_argument("-p", "--prototxt", required=False,
 ap.add_argument("-m", "--model", required=False,
                 default='MobileNetSSD_deploy.caffemodel',
                 help="path to Caffe pre-trained model")
-ap.add_argument("-c", "--confidence", type=float, default=0.45,
+ap.add_argument("-c", "--confidence", type=float, default=0.4,
                 help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
@@ -95,7 +95,6 @@ def handle_detections(detections, confidence=args["confidence"], x_offset=0, y_o
             if class_name in NEED_CLASSES:
                 # 继续检测人脸
                 if class_name == 'person':
-                    print('face location:', startX, startY, endX, endY)
                     face_detect.face_detect(frame[startY: endY, startX: endX])
                 elif class_name == 'car':
                     brand_region = car_brand_detect(frame[startY: endY, startX: endX])
@@ -199,10 +198,16 @@ while True:
         tracker = tracker_status[i]
         tracker.destroy()
 
-    dynamic_area = dynamic_area_detect(frame, ignore_area, max_size=W * H * 0.4)
+# 遮盖区域
+    fake_frame = frame.copy()
+    for i in ignore_area:
+        x, y, w, h = i
+        fake_frame[y: y+h, x:x+w] = 0
+
+    dynamic_area = dynamic_area_detect(frame, ignore_area, max_size=W * H * 0.3)
     for area in dynamic_area:
         x, y, w, h = area
-        detections = target_detect(frame[y: y + h, x:x + w])
+        detections = target_detect(fake_frame[y: y + h, x:x + w])
         handle_detections(detections, x_offset=x, y_offset=y)
 
     # if the `q` key was pressed, break from the loop

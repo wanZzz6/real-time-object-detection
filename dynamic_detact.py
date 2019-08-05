@@ -23,9 +23,9 @@ def dynamic_area_detect(frame, ignore_area=[], min_size=500, max_size=22000):
     fg2 = fgmask.copy()
     # 二值化阈值处理
     th = cv2.threshold(fg2, 244, 255, cv2.THRESH_BINARY)[1]
-    for i in ignore_area:
-        x, y, w, h = i
-        th[y: y+h, x:x+w] = 0
+    # for i in ignore_area:
+    #     x, y, w, h = i
+    #     th[y: y+h, x:x+w] = 0
 # 形态学膨胀
 ## 1
     th = cv2.erode(th, _es, iterations=2)
