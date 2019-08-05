@@ -10,6 +10,9 @@ import argparse
 import imutils
 import cv2
 
+import face_detect
+
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--prototxt", required=False,
@@ -42,8 +45,8 @@ net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 # and initialize the FPS counter
 print("[INFO] starting video stream...")
 video_file = r'data\video\test_video.flv'
+vs = VideoStream(0).start()
 # vs = VideoStream(video_file).start()
-vs = VideoStream(video_file).start()
 time.sleep(2.0)
 fps = FPS().start()
 
@@ -67,6 +70,11 @@ while True:
     detections = net.forward()
 
     # loop over the detections
+    # eg:
+    # [[[[0.          9.          0.42181703  0.4647404   0.610577
+    #     0.6360997   0.8479532]
+    #    [0.         15.          0.8989926   0.21603307  0.42735672
+    #    0.58441484  0.8699994]]]]
     for i in np.arange(0, detections.shape[2]):
         # extract the confidence (i.e., probability) associated with
         # the prediction
@@ -81,10 +89,12 @@ while True:
             idx = int(detections[0, 0, i, 1])
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
-            print('startX, startY, endX, endY', startX, startY, endX, endY)
+            # print('startX, startY, endX, endY', startX, startY, endX, endY)
 
             class_name = CLASSES[idx]
             if class_name in NEED_CLASSES:
+                if class_name == 'person':
+                    face_detect.face_detect(frame[startY: endY, startX: endX])
                 # draw the prediction on the frame
                 label = "{}: {:.2f}%".format(class_name,
                                              confidence * 100)
