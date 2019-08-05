@@ -1,6 +1,10 @@
 import os
 import cv2
 
+face_save_path = os.path.join('data', 'face')
+if not os.path.exists(face_save_path):
+    os.makedirs(face_save_path)
+
 # 加载人脸特征库
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
